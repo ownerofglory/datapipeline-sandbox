@@ -1,0 +1,20 @@
+apiVersion: v1
+kind: Service
+metadata:
+  namespace: {{ .Values.namespace }}
+  name: {{ include "mosquitto.fullname" . }}
+  labels:
+    {{- include "mosquitto.labels" . | nindent 4 }}
+spec:
+  type: {{ .Values.service.type }}
+  ports:
+    - name: mqtt
+      port: {{ .Values.service.mqtt.port }}
+      targetPort: {{ .Values.service.mqtt.port }}
+      nodePort: {{ .Values.service.mqtt.nodePort }}
+    - name: websocket
+      port: {{ .Values.service.websocket.port }}
+      targetPort: {{ .Values.service.websocket.port }}
+      nodePort: {{ .Values.service.websocket.nodePort }}
+  selector:
+    {{- include "mosquitto.selectorLabels" . | nindent 4 }}

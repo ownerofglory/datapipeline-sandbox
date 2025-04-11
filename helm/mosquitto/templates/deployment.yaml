@@ -1,0 +1,50 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  namespace: {{ .Values.namespace }}
+  name: {{ include "mosquitto.fullname" . }}
+  labels:
+    {{- include "mosquitto.labels" . | nindent 4 }}
+spec:
+  {{- if not .Values.autoscaling.enabled }}
+  replicas: {{ .Values.replicaCount }}
+  {{- end }}
+  selector:
+    matchLabels:
+      {{- include "mosquitto.selectorLabels" . | nindent 6 }}
+  template:
+    metadata:
+      {{- with .Values.podAnnotations }}
+      annotations:
+        {{- toYaml . | nindent 8 }}
+      {{- end }}
+      labels:
+        {{- include "mosquitto.labels" . | nindent 8 }}
+        {{- with .Values.podLabels }}
+        {{- toYaml . | nindent 8 }}
+        {{- end }}
+    spec:
+      containers:
+        - name: mqtt5
+          image: "{{ .Values.image.repository }}:{{ .Values.image.tag }}"
+          imagePullPolicy: {{ .Values.image.pullPolicy }}
+          ports:
+            - containerPort: {{ .Values.service.mqtt.port }}
+            - containerPort: {{ .Values.service.websocket.port }}
+          volumeMounts:
+            - name: config-volume
+              mountPath: {{ .Values.persistence.config.path }}
+            - name: data-volume
+              mountPath: {{ .Values.persistence.data.path }}
+            - name: log-volume
+              mountPath: {{ .Values.persistence.log.path }}
+      volumes:
+        - name: config-volume
+          persistentVolumeClaim:
+            claimName: mqtt5-config-pvc
+        - name: data-volume
+          persistentVolumeClaim:
+            claimName: mqtt5-data-pvc
+        - name: log-volume
+          persistentVolumeClaim:
+            claimName: mqtt5-log-pvc
